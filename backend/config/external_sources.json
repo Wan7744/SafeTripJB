@@ -1,0 +1,79 @@
+{
+  "map_provider": {
+    "selected": "kakao_map",
+    "reason": "MVP targets Korean regional tourism operations, so Kakao Map is the primary SDK candidate for local POI and map UX."
+  },
+  "ai_analysis": {
+    "provider": "anthropic",
+    "model": "claude-sonnet-4-20250514",
+    "usage_policy": "Use only after deterministic visitor, festival, weather, and holiday evidence is assembled.",
+    "request_limit_policy": "Start with low-throughput backoffice calls and add queueing before public exposure.",
+    "failure_policy": "Return deterministic fallback text and log the missing AI provider status."
+  },
+  "sources": [
+    {
+      "id": "kto-datalab-visitors",
+      "provider": "한국관광공사",
+      "dataset": "빅데이터 지역별 방문자수 GW",
+      "format": ["json", "xml"],
+      "schedule": "0 3 * * *",
+      "raw_retention_days": 90,
+      "processed_retention_days": 730,
+      "retry": {
+        "max_attempts": 3,
+        "backoff_seconds": [30, 120, 300]
+      },
+      "fallback": {
+        "use_previous_processed_file": true,
+        "is_estimated": true
+      }
+    },
+    {
+      "id": "odcloud-historical-festivals",
+      "provider": "공공데이터포털",
+      "dataset": "전라북도 지역축제 관광객현황",
+      "format": ["json", "xml", "csv"],
+      "schedule": "30 3 * * *",
+      "raw_retention_days": 365,
+      "processed_retention_days": 1095,
+      "retry": {
+        "max_attempts": 3,
+        "backoff_seconds": [30, 120, 300]
+      },
+      "fallback": {
+        "use_previous_processed_file": true,
+        "is_estimated": true
+      }
+    },
+    {
+      "id": "kma-weather",
+      "provider": "기상청",
+      "dataset": "지역별 초단기/단기 날씨 요약",
+      "format": ["json"],
+      "schedule": "0 */3 * * *",
+      "raw_retention_days": 30,
+      "processed_retention_days": 365,
+      "retry": {
+        "max_attempts": 3,
+        "backoff_seconds": [20, 60, 180]
+      },
+      "fallback": {
+        "use_previous_processed_file": true,
+        "is_estimated": true
+      }
+    }
+  ],
+  "storage_paths": {
+    "raw": "data/raw/{provider}/{dataset}/{yyyy}/{mm}/{dd}/{request_id}.json",
+    "processed": "data/processed/{dataset}.json",
+    "exports": "data/exports/{yyyy}/{mm}/{dd}/{report_id}.{ext}",
+    "logs": "data/logs/pipeline/{yyyy}/{mm}/{dd}.jsonl"
+  },
+  "cache_policy": {
+    "dashboard_ttl_seconds": 900,
+    "visitor_stats_ttl_seconds": 1800,
+    "festival_history_ttl_seconds": 86400,
+    "db_write_stage": "write processed files and DB tables before cache refresh",
+    "cache_refresh_stage": "refresh cache only after all quality checks pass"
+  }
+}

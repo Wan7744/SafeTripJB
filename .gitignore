@@ -1,0 +1,13 @@
+.env
+.env.local
+.env.development
+frontend/.next/
+frontend/node_modules/
+backend/__pycache__/
+backend/safetrip_jb/__pycache__/
+backend/data/raw/*
+backend/data/processed/*
+data/raw/*
+data/processed/*
+!backend/data/raw/.gitkeep
+!backend/data/processed/.gitkeep

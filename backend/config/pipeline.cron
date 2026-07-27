@@ -1,0 +1,17 @@
+# SafeTrip JB MVP local batch schedule.
+# Replace `python` with the deployed worker command when moving to Celery Beat or ECS scheduled tasks.
+
+# 03:00 daily: Korea Tourism Organization visitor counts.
+0 3 * * * cd /app && python -m safetrip_jb.kto_visitors fetch --env .env --output data/processed/jeonbuk_visitors_daily.json
+
+# 03:30 daily: ODCLOUD historical festival source refresh.
+30 3 * * * cd /app && python -m safetrip_jb.festival_history fetch --env .env --output data/raw/historical_festivals.json
+
+# 03:40 daily: Normalize historical festival file.
+40 3 * * * cd /app && python -m safetrip_jb.festival_history convert --input data/raw/historical_festivals.json --output data/processed/historical_festivals_en.csv
+
+# Every 3 hours: KMA fallback weather placeholder until the final weather endpoint is wired.
+0 */3 * * * cd /app && python -m safetrip_jb.weather write --output data/processed/weather_daily.json
+
+# 04:00 daily: Build dashboard features after source files are refreshed.
+0 4 * * * cd /app && python -m safetrip_jb.pipeline derive --visitor-input data/processed/jeonbuk_visitors_daily.json --festival-csv data/processed/historical_festivals_en.csv --output data/processed/dashboard_features.json
